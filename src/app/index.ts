@@ -1,3 +1,4 @@
+import { error } from "console";
 import { IncomingMessage } from "http";
 import WebSocket, { WebSocketServer } from "ws";
 
@@ -17,8 +18,24 @@ class App {
 
       socket.on("message", (msg) => {
         const parsedMsg = JSON.parse(msg.toString());
-        console.log(parsedMsg);
-        socket.send(JSON.stringify(parsedMsg));
+        const parsedData = JSON.parse(parsedMsg.data);
+        console.log(parsedData);
+        socket.send(
+          JSON.stringify({
+            type: "reg",
+            data: JSON.stringify({
+              ...(parsedData.name === "12345678"
+                ? {
+                    error: true,
+                    errorText: "Дядя, ты дурак?",
+                  }
+                : {}),
+              name: "booba",
+              index: Date.now(),
+            }),
+            id: 0,
+          })
+        );
       });
     });
   }
