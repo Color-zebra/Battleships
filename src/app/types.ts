@@ -1,12 +1,17 @@
 export type IncomingMessageType = {
   type: "reg";
-  data: UserIncomingData;
+  data: UserIncomingData & { id: 0 };
   id: 0;
 };
 
 export type UserIncomingData = {
   name: string;
   password: string;
+};
+
+export type UserResponse = {
+  type: "reg";
+  data: string;
   id: 0;
 };
 

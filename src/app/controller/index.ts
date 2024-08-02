@@ -30,7 +30,7 @@ export class Controller {
 
       switch (parsedMsg.type) {
         case "reg":
-          this.regService.handleMsg(parsedMsg);
+          this.regService.handleMsg(parsedMsg, socket);
       }
     };
   }
