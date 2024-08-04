@@ -1,5 +1,5 @@
 import { WebSocket } from "ws";
-import { Room, FullUser } from "./types";
+import { Room, FullUser, UserInRoom } from "./types";
 
 export class DB {
   users: FullUser[];
@@ -11,9 +11,7 @@ export class DB {
   }>;
   constructor() {
     this.users = [];
-    this.rooms = [
-      { roomId: "asd", roomUsers: [{ index: "asd", name: "testName" }] },
-    ];
+    this.rooms = [];
     this.connectionsList = [];
   }
 
@@ -78,7 +76,7 @@ export class DB {
     }
 
     const newRoom: Room = {
-      roomId: Date.now() + this.rooms.length,
+      roomId: String(Date.now() + this.rooms.length),
       roomUsers: [
         {
           index: creatorPlayerId,
@@ -90,11 +88,37 @@ export class DB {
     this.rooms.push(newRoom);
   }
 
+  async addUserToRoom(roomId: string, user: UserInRoom) {
+    console.log("room id", roomId);
+    console.log("rooms", this.rooms);
+
+    const room = this.rooms.find(
+      ({ roomId: currRoomId }) => roomId === currRoomId
+    );
+    console.log(room);
+
+    if (!room) {
+      console.log("no room");
+
+      throw new Error("There is no room with such id!");
+    } else if (room.roomUsers.length !== 1) {
+      throw new Error("Room already in use!");
+    } else {
+      room.roomUsers.push(user);
+      return room.roomId;
+    }
+  }
+
   async getAllFreeRooms() {
     const freeRooms = this.rooms.filter(
       ({ roomUsers }) => roomUsers.length === 1
     );
     return freeRooms;
+  }
+
+  async getRoom(currRoomId: string) {
+    const room = this.rooms.find(({ roomId }) => roomId === currRoomId);
+    return !!room ? room : null;
   }
 }
 

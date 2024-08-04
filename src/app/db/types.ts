@@ -8,10 +8,12 @@ export type FullUser = User & {
   wins: number;
 };
 
+export type UserInRoom = {
+  name: string;
+  index: string;
+};
+
 export type Room = {
   roomId: string | number;
-  roomUsers: Array<{
-    name: string;
-    index: number | string;
-  }>;
+  roomUsers: Array<UserInRoom>;
 };

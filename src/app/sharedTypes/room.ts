@@ -20,6 +20,12 @@ export type AddUserToRoomIncomingData = {
   indexRoom: string | number;
 };
 
+export type AddUserToRoomRequest = {
+  type: "add_user_to_room";
+  data: AddUserToRoomIncomingData;
+  id: 0;
+};
+
 export type RoomResponseData = Room[];
 
 export type UpdateRoomResponse = {

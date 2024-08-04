@@ -25,7 +25,7 @@ export class Controller {
       const parsedMsg = parseMessage(msg.toString());
 
       if (!parsedMsg) {
-        socket.close(400, "Invalid input");
+        socket.close(1003, "Invalid input");
         return;
       }
 
@@ -35,7 +35,7 @@ export class Controller {
           break;
         case "create_room":
         case "add_user_to_room":
-          this.roomService.handleMsg(parsedMsg, id);
+          this.roomService.handleMsg(parsedMsg, id, socket);
           break;
       }
     };
