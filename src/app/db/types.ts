@@ -14,6 +14,6 @@ export type UserInRoom = {
 };
 
 export type Room = {
-  roomId: string | number;
+  roomId: string;
   roomUsers: Array<UserInRoom>;
 };

@@ -21,7 +21,13 @@ export class RoomService {
 
     switch (msg.type) {
       case "create_room":
-        await this.createRoom(id);
+        try {
+          await this.createRoom(id);
+        } catch (error) {
+          if (error instanceof Error) {
+            socket.send(JSON.stringify(error.message));
+          }
+        }
         break;
       case "add_user_to_room":
         if (this.isValidAddUserToRoomMesssage(msg)) {
@@ -31,7 +37,7 @@ export class RoomService {
             console.log("catched");
 
             if (error instanceof Error) {
-              closeSocketWithMessage(socket, error.message);
+              socket.send(error.message);
             }
           }
         } else {
@@ -43,11 +49,17 @@ export class RoomService {
   }
 
   async createRoom(creatorPlayerId: string) {
+    const userRoom = await this.db.getFreeRoomByPlayerId(creatorPlayerId);
+    if (userRoom) {
+      throw new Error("You already create a room!");
+    }
     await this.db.addRoom(creatorPlayerId);
   }
 
   async updateRoomsInfoForAllUsers() {
     const data = await this.db.getAllFreeRooms();
+    console.log("rooms for update", data);
+
     const response: UpdateRoomResponse = {
       id: 0,
       data: JSON.stringify(data),
@@ -76,7 +88,13 @@ export class RoomService {
       throw new Error("There is no such player");
     }
 
-    console.log(player);
+    const currUserRoom = await this.db.getFreeRoomByPlayerId(playerId);
+
+    if (currUserRoom && currUserRoom.roomId === roomId) {
+      throw new Error("You already in this room");
+    } else if (currUserRoom) {
+      this.db.deleteRoom(currUserRoom.roomId);
+    }
 
     try {
       await this.db.addUserToRoom(roomId, {
@@ -106,5 +124,15 @@ export class RoomService {
       typeof msg.data === "object" &&
       "indexRoom" in msg.data
     );
+  }
+
+  async handlePlayerDisconnect(playerId: string) {
+    const roomWithDisconnectedPlayer = await this.db.getFreeRoomByPlayerId(
+      playerId
+    );
+    if (roomWithDisconnectedPlayer) {
+      await this.db.deleteRoom(roomWithDisconnectedPlayer.roomId);
+      await this.updateRoomsInfoForAllUsers();
+    }
   }
 }

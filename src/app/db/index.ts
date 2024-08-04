@@ -88,6 +88,10 @@ export class DB {
     this.rooms.push(newRoom);
   }
 
+  async deleteRoom(roomId: string) {
+    this.rooms = this.rooms.filter((room) => room.roomId !== roomId);
+  }
+
   async addUserToRoom(roomId: string, user: UserInRoom) {
     console.log("room id", roomId);
     console.log("rooms", this.rooms);
@@ -119,6 +123,16 @@ export class DB {
   async getRoom(currRoomId: string) {
     const room = this.rooms.find(({ roomId }) => roomId === currRoomId);
     return !!room ? room : null;
+  }
+
+  async getFreeRoomByPlayerId(playerId: string) {
+    const room = this.rooms.find(
+      ({ roomUsers }) =>
+        roomUsers.length === 1 &&
+        roomUsers.some(({ index }) => index === playerId)
+    );
+    console.log("room with disconnected player", room);
+    return room ? room : null;
   }
 }
 

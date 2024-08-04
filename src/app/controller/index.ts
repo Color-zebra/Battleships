@@ -48,7 +48,10 @@ export class Controller {
       socket,
     };
 
-    socket.on("close", () => this.db.deleteConnection(id));
+    socket.on("close", () => {
+      this.db.deleteConnection(id);
+      this.roomService.handlePlayerDisconnect(id);
+    });
     socket.on("message", this.createMessageHandler(socket, id));
     this.db.addConnection(socketObj);
   }
