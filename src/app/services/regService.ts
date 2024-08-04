@@ -7,6 +7,7 @@ import {
   UserResponse,
 } from "../sharedTypes/user";
 import { RoomService } from "./roomService";
+import { User } from "../db/types";
 
 export class RegService {
   db: DB;
@@ -17,18 +18,41 @@ export class RegService {
     this.roomService = new RoomService();
   }
 
-  async createUser(
+  async handleUserSignin(
     userData: UserIncomingData & {
       id: string;
     }
-  ) {
-    const isUserExist = !!(await this.db.getUserByName(userData.name));
-    if (isUserExist) {
-      throw new Error("User alredy exist");
-    } else {
-      const createdUser = await this.db.addUser(userData.name, userData.id);
-      return createdUser;
+  ): Promise<User> {
+    const isUserAlreadyLogin = this.db
+      .getAllConnections()
+      .find(({ userName }) => userName === userData.name);
+    if (isUserAlreadyLogin) {
+      throw new Error("User already login!");
     }
+
+    const userInDb = await this.db.getUserByName(userData.name);
+    const isPasswordCorrect = userInDb?.password === userData.password;
+    let userResponse: User | null = null;
+    if (isPasswordCorrect) {
+      userResponse = { ...userInDb };
+    } else if (!!userInDb) {
+      throw new Error("Wrong password");
+    } else {
+      userResponse = await this.db.addUser(
+        userData.name,
+        userData.password,
+        userData.id
+      );
+    }
+
+    const userConnection = this.db.getConnectionByID(userData.id);
+    if (userConnection) {
+      userConnection.userName = userResponse.name;
+    }
+    return {
+      index: userResponse.index,
+      name: userResponse.name,
+    };
   }
 
   async handleMsg(msg: IncomingUserMessageType, socket: WebSocket, id: string) {
@@ -39,7 +63,7 @@ export class RegService {
         id: 0,
       };
       try {
-        const newUser = await this.createUser({
+        const newUser = await this.handleUserSignin({
           name: msg.data.name,
           password: msg.data.password,
           id,
@@ -49,12 +73,14 @@ export class RegService {
           error: false,
         });
       } catch (error) {
-        response.data = JSON.stringify({
-          name: msg.data.name,
-          index: "",
-          error: true,
-          errorText: "User already exist",
-        });
+        if (error instanceof Error) {
+          response.data = JSON.stringify({
+            name: msg.data.name,
+            index: "",
+            error: true,
+            errorText: error.message,
+          });
+        }
       }
       socket.send(JSON.stringify(response));
       this.roomService.updateRoomsForOneUser(socket);

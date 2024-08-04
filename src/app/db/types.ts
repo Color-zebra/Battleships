@@ -3,6 +3,10 @@ export type User = {
   index: string;
 };
 
+export type UserWithPassword = User & {
+  password: string;
+};
+
 export type Room = {
   roomId: string | number;
   roomUsers: Array<{

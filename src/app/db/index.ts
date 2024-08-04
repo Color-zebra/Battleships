@@ -1,11 +1,12 @@
 import { WebSocket } from "ws";
-import { Room, User } from "./types";
+import { Room, User, UserWithPassword } from "./types";
 
 export class DB {
-  users: User[];
+  users: UserWithPassword[];
   rooms: Room[];
   connectionsList: Array<{
     id: string;
+    userName?: string;
     socket: WebSocket;
   }>;
   constructor() {
@@ -44,10 +45,11 @@ export class DB {
     return user || null;
   }
 
-  async addUser(userName: string, id: string) {
-    const newUser: User = {
+  async addUser(userName: string, password: string, id: string) {
+    const newUser: UserWithPassword = {
       name: userName,
       index: String(id),
+      password,
     };
     this.users.push(newUser);
     return newUser;
