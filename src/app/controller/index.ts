@@ -19,7 +19,7 @@ export class Controller {
     this.connectionsList.forEach((socket) => socket.socket.close());
   }
 
-  createMessageHandler(socket: WebSocket) {
+  createMessageHandler(socket: WebSocket, id: number) {
     return (msg: RawData) => {
       const parsedMsg = parseMessage(msg.toString());
 
@@ -30,7 +30,7 @@ export class Controller {
 
       switch (parsedMsg.type) {
         case "reg":
-          this.regService.handleMsg(parsedMsg, socket);
+          this.regService.handleMsg(parsedMsg, socket, id);
       }
     };
   }
@@ -48,7 +48,7 @@ export class Controller {
       );
     });
 
-    socket.on("message", this.createMessageHandler(socket));
+    socket.on("message", this.createMessageHandler(socket, id));
 
     this.connectionsList.push(socketObj);
   }

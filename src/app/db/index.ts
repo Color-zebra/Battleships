@@ -11,10 +11,10 @@ export class DB {
     return user || null;
   }
 
-  async addUser(userName: string) {
+  async addUser(userName: string, id: number) {
     const newUser: User = {
       name: userName,
-      index: String(Date.now()) + this.users.length,
+      index: id,
     };
     this.users.push(newUser);
     return newUser;
