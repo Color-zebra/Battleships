@@ -8,14 +8,17 @@ import {
 } from "../sharedTypes/user";
 import { RoomService } from "./roomService";
 import { User } from "../db/types";
+import { WinnersService } from "./winnersService";
 
 export class RegService {
   db: DB;
   roomService: RoomService;
+  winnersService: WinnersService;
 
   constructor() {
     this.db = DBInstance;
     this.roomService = new RoomService();
+    this.winnersService = new WinnersService();
   }
 
   async handleUserSignin(
@@ -83,7 +86,8 @@ export class RegService {
         }
       }
       socket.send(JSON.stringify(response));
-      this.roomService.updateRoomsForOneUser(socket);
+      this.roomService.updateRoomsInfoForAllUsers();
+      this.winnersService.updateWinnersForAllUsers();
     }
   }
 

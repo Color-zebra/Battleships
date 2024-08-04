@@ -3,8 +3,9 @@ export type User = {
   index: string;
 };
 
-export type UserWithPassword = User & {
+export type FullUser = User & {
   password: string;
+  wins: number;
 };
 
 export type Room = {

@@ -1,8 +1,8 @@
 import { WebSocket } from "ws";
-import { Room, User, UserWithPassword } from "./types";
+import { Room, FullUser } from "./types";
 
 export class DB {
-  users: UserWithPassword[];
+  users: FullUser[];
   rooms: Room[];
   connectionsList: Array<{
     id: string;
@@ -35,6 +35,10 @@ export class DB {
     );
   }
 
+  async getAllUsers() {
+    return this.users;
+  }
+
   async getUserByName(userName: string) {
     const user = this.users.find(({ name }) => name === userName);
     return user || null;
@@ -46,10 +50,11 @@ export class DB {
   }
 
   async addUser(userName: string, password: string, id: string) {
-    const newUser: UserWithPassword = {
+    const newUser: FullUser = {
       name: userName,
       index: String(id),
       password,
+      wins: 0,
     };
     this.users.push(newUser);
     return newUser;
