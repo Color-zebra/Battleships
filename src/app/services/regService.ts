@@ -1,25 +1,28 @@
 import { WebSocket } from "ws";
 import DBInstance, { DB } from "../db/index";
+import { IncomingMessageType } from "../sharedTypes/types";
 import {
-  IncomingMessageType,
+  IncomingUserMessageType,
   UserIncomingData,
   UserResponse,
-  UserResponseData,
-} from "../types";
+} from "../sharedTypes/user";
+import { RoomService } from "./roomService";
 
 export class RegService {
   db: DB;
+  roomService: RoomService;
 
   constructor() {
     this.db = DBInstance;
+    this.roomService = new RoomService();
   }
 
   async createUser(
     userData: UserIncomingData & {
-      id: number;
+      id: string;
     }
   ) {
-    const isUserExist = !!(await this.db.getUser(userData.name));
+    const isUserExist = !!(await this.db.getUserByName(userData.name));
     if (isUserExist) {
       throw new Error("User alredy exist");
     } else {
@@ -28,7 +31,7 @@ export class RegService {
     }
   }
 
-  async handleMsg(msg: IncomingMessageType, socket: WebSocket, id: number) {
+  async handleMsg(msg: IncomingUserMessageType, socket: WebSocket, id: string) {
     if (this.isValidUserMsg(msg)) {
       let response: UserResponse = {
         type: "reg",
@@ -54,6 +57,7 @@ export class RegService {
         });
       }
       socket.send(JSON.stringify(response));
+      this.roomService.updateRoomsForOneUser(socket);
     }
   }
 

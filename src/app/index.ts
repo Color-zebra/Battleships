@@ -1,4 +1,3 @@
-import { error } from "console";
 import { IncomingMessage } from "http";
 import WebSocket, { WebSocketServer } from "ws";
 import { Controller } from "./controller";

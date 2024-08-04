@@ -1,4 +1,4 @@
-export type IncomingMessageType = {
+export type IncomingUserMessageType = {
   type: "reg";
   data: UserIncomingData & { id: 0 };
   id: 0;
@@ -27,9 +27,3 @@ export type UserResponseData = {
       error: false;
     }
 );
-
-export type IncomingUserMessageType = {
-  type: "reg";
-  data: UserIncomingData;
-  id: 0;
-};

@@ -1,4 +1,12 @@
 export type User = {
   name: string;
-  index: string | number;
+  index: string;
+};
+
+export type Room = {
+  roomId: string | number;
+  roomUsers: Array<{
+    name: string;
+    index: number | string;
+  }>;
 };

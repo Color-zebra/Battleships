@@ -1,25 +1,26 @@
 import { RawData, WebSocket } from "ws";
 import { parseMessage } from "../utils/parseMessage";
 import { RegService } from "../services/regService";
+import DBInstance, { DB } from "../db/index";
+import { RoomService } from "../services/roomService";
 
 export class Controller {
-  private connectionsList: Array<{
-    id: number;
-    socket: WebSocket;
-  }>;
   regService: RegService;
+  roomService: RoomService;
+  db: DB;
 
   constructor() {
-    this.connectionsList = [];
     this.regService = new RegService();
+    this.roomService = new RoomService();
     this.handleConnection = this.handleConnection.bind(this);
+    this.db = DBInstance;
   }
 
   closeAllConnections() {
-    this.connectionsList.forEach((socket) => socket.socket.close());
+    this.db.getAllConnections().forEach((socket) => socket.socket.close());
   }
 
-  createMessageHandler(socket: WebSocket, id: number) {
+  createMessageHandler(socket: WebSocket, id: string) {
     return (msg: RawData) => {
       const parsedMsg = parseMessage(msg.toString());
 
@@ -31,25 +32,24 @@ export class Controller {
       switch (parsedMsg.type) {
         case "reg":
           this.regService.handleMsg(parsedMsg, socket, id);
+          break;
+        case "create_room":
+        case "add_user_to_room":
+          this.roomService.handleMsg(parsedMsg, id);
+          break;
       }
     };
   }
 
   handleConnection(socket: WebSocket) {
-    const id = Date.now() + this.connectionsList.length;
+    const id = String(Date.now() + this.db.getAllConnections().length);
     const socketObj = {
       id,
       socket,
     };
 
-    socket.on("close", () => {
-      this.connectionsList = this.connectionsList.filter(
-        (currSocket) => currSocket.id !== id
-      );
-    });
-
+    socket.on("close", () => this.db.deleteConnection(id));
     socket.on("message", this.createMessageHandler(socket, id));
-
-    this.connectionsList.push(socketObj);
+    this.db.addConnection(socketObj);
   }
 }
