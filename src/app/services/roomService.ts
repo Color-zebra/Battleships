@@ -100,6 +100,7 @@ export class RoomService {
       await this.db.addUserToRoom(roomId, {
         index: player?.index,
         name: player?.name,
+        gameField: null,
       });
       console.log("Добавили в руму");
       await this.updateRoomsInfoForAllUsers();

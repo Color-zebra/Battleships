@@ -3,15 +3,18 @@ import { parseMessage } from "../utils/parseMessage";
 import { RegService } from "../services/regService";
 import DBInstance, { DB } from "../db/index";
 import { RoomService } from "../services/roomService";
+import { GameService } from "../services/gameService";
 
 export class Controller {
   regService: RegService;
   roomService: RoomService;
+  gameService: GameService;
   db: DB;
 
   constructor() {
     this.regService = new RegService();
     this.roomService = new RoomService();
+    this.gameService = new GameService();
     this.handleConnection = this.handleConnection.bind(this);
     this.db = DBInstance;
   }
@@ -36,6 +39,9 @@ export class Controller {
         case "create_room":
         case "add_user_to_room":
           this.roomService.handleMsg(parsedMsg, id, socket);
+          break;
+        case "add_ships":
+          this.gameService.handleMsg(parsedMsg, socket);
           break;
       }
     };

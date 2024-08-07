@@ -1,5 +1,6 @@
 import { WebSocket } from "ws";
 import { Room, FullUser, UserInRoom } from "./types";
+import { ShipData } from "../sharedTypes/game";
 
 export class DB {
   users: FullUser[];
@@ -58,6 +59,19 @@ export class DB {
     return newUser;
   }
 
+  async addShipsToUser(userId: string, roomId: string, ships: ShipData[]) {
+    const room = await this.getRoom(roomId);
+    if (!room) {
+      throw new Error("There is no such room");
+    }
+    const user = room.roomUsers.find(({ index }) => index === userId);
+    if (!user) {
+      throw new Error("There is no such user in the room");
+    }
+    user.gameField = ships;
+    return user;
+  }
+
   async deleteUserByUserName(userName: string) {
     this.users = this.users.filter(({ name }) => name !== userName);
     return true;
@@ -81,6 +95,7 @@ export class DB {
         {
           index: creatorPlayerId,
           name: creatorUserName.name,
+          gameField: null,
         },
       ],
     };
