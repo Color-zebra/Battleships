@@ -8,9 +8,13 @@ import {
   ShipData,
   StartGameResponse,
   StartGameResponseData,
+  TurnResponse,
+  TurnResponseData,
 } from "../sharedTypes/game";
 import { closeSocketWithMessage } from "../utils/closeWithMessage";
 import { Room } from "../db/types";
+
+import util from "util";
 
 export class GameService {
   db: DB;
@@ -89,6 +93,10 @@ export class GameService {
     ) {
       return;
     }
+    await this.db.setActivePlayer(
+      room.roomId,
+      Math.random() > 0.5 ? playerOne.index : playerTwo.index
+    );
     const playerOneResponseData: StartGameResponseData = {
       currentPlayerIndex: playerOne.index,
       ships: playerOne.gameField,
@@ -110,6 +118,31 @@ export class GameService {
 
     playerOneSocket.socket.send(JSON.stringify(playerOneResponse));
     playerTwoSocket.socket.send(JSON.stringify(playerTwoResponse));
+    await this.sendTurn(room);
+  }
+
+  async sendTurn(room: Room) {
+    const {
+      roomUsers: [playerOne, playerTwo],
+    } = room;
+    if (!room.activePlayerId || !playerOne || !playerTwo) {
+      throw new Error("There is no active player");
+    }
+    const playersSockets = this.db.getConnectionByID(playerOne.index);
+    const secondPlayerSocket = this.db.getConnectionByID(playerTwo.index);
+
+    const turnData: TurnResponseData = { currentPlayer: room.activePlayerId };
+
+    const turnResponse: TurnResponse = {
+      type: "turn",
+      data: JSON.stringify(turnData),
+      id: 0,
+    };
+
+    console.log("Make turn!");
+
+    playersSockets?.socket.send(JSON.stringify(turnResponse));
+    secondPlayerSocket?.socket.send(JSON.stringify(turnResponse));
   }
 
   isValidShipsIncomingData(

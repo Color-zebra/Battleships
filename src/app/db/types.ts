@@ -19,4 +19,5 @@ export type UserInRoom = {
 export type Room = {
   roomId: string;
   roomUsers: Array<UserInRoom>;
+  activePlayerId: string | null;
 };

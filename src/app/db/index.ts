@@ -91,6 +91,7 @@ export class DB {
 
     const newRoom: Room = {
       roomId: String(Date.now() + this.rooms.length),
+      activePlayerId: null,
       roomUsers: [
         {
           index: creatorPlayerId,
@@ -126,6 +127,18 @@ export class DB {
       room.roomUsers.push(user);
       return room.roomId;
     }
+  }
+
+  async setActivePlayer(roomId: string, userId: string) {
+    const room = await this.getRoom(roomId);
+    const user = await this.getUserById(userId);
+
+    if (!room || !user) {
+      throw new Error("There is no user or room");
+    }
+
+    room.activePlayerId = userId;
+    return room;
   }
 
   async getAllFreeRooms() {

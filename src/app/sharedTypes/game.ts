@@ -41,3 +41,13 @@ export type StartGameResponseData = {
   ships: ShipData[];
   currentPlayerIndex: string;
 };
+
+export type TurnResponse = {
+  type: "turn";
+  data: string;
+  id: 0;
+};
+
+export type TurnResponseData = {
+  currentPlayer: string;
+};
