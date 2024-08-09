@@ -68,7 +68,7 @@ export class DB {
     if (!user) {
       throw new Error("There is no such user in the room");
     }
-    user.gameField = ships;
+    user.shipsInfo = ships;
     return user;
   }
 
@@ -95,7 +95,7 @@ export class DB {
         {
           index: creatorPlayerId,
           name: creatorUserName.name,
-          gameField: null,
+          shipsInfo: null,
         },
       ],
     };

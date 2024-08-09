@@ -1,4 +1,4 @@
-import { ShipData } from "../sharedTypes/game";
+import { GameField, ShipData } from "../sharedTypes/game";
 
 export type User = {
   name: string;
@@ -13,7 +13,8 @@ export type FullUser = User & {
 export type UserInRoom = {
   name: string;
   index: string;
-  gameField: ShipData[] | null;
+  shipsInfo: ShipData[] | null;
+  userGameField?: GameField;
 };
 
 export type Room = {
