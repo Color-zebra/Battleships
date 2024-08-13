@@ -2,8 +2,10 @@ import { WebSocket } from "ws";
 import DBInstance, { DB } from "../db/index";
 import {
   AddShipsIncomingData,
+  AttackData,
   CreateGameResponse,
   CreateGameResponseData,
+  GameField,
   IncomingAddShipsMessageType,
   ShipData,
   StartGameResponse,
@@ -12,7 +14,8 @@ import {
   TurnResponseData,
 } from "../sharedTypes/game";
 import { closeSocketWithMessage } from "../utils/closeWithMessage";
-import { Room } from "../db/types";
+import { Room, UserInRoom } from "../db/types";
+import { start } from "repl";
 
 import util from "util";
 
@@ -73,7 +76,7 @@ export class GameService {
     if (!room) {
       throw new Error("Incorrect game id");
     }
-    if (room.roomUsers.every(({ gameField }) => !!gameField)) {
+    if (room.roomUsers.every(({ shipsInfo }) => !!shipsInfo)) {
       console.log("try to start");
 
       this.startGame(room);
@@ -86,8 +89,8 @@ export class GameService {
     const playerOneSocket = this.db.getConnectionByID(playerOne.index);
     const playerTwoSocket = this.db.getConnectionByID(playerTwo.index);
     if (
-      !playerOne.gameField ||
-      !playerTwo.gameField ||
+      !playerOne.shipsInfo ||
+      !playerTwo.shipsInfo ||
       !playerOneSocket ||
       !playerTwoSocket
     ) {
@@ -99,7 +102,7 @@ export class GameService {
     );
     const playerOneResponseData: StartGameResponseData = {
       currentPlayerIndex: playerOne.index,
-      ships: playerOne.gameField,
+      ships: playerOne.shipsInfo,
     };
     const playerOneResponse: StartGameResponse = {
       data: JSON.stringify(playerOneResponseData),
@@ -108,7 +111,7 @@ export class GameService {
     };
     const playerTwoResponseData: StartGameResponseData = {
       currentPlayerIndex: playerTwo.index,
-      ships: playerTwo.gameField,
+      ships: playerTwo.shipsInfo,
     };
     const playerTwoResponse: StartGameResponse = {
       data: JSON.stringify(playerTwoResponseData),
@@ -145,6 +148,73 @@ export class GameService {
     secondPlayerSocket?.socket.send(JSON.stringify(turnResponse));
   }
 
+  generateGameField() {
+    const field: GameField = Array.from(Array(10)).map((item) =>
+      Array.from(Array(10)).map((item) => ({ status: "hidden" }))
+    );
+    return field;
+  }
+
+  async getShotResult(attackData: AttackData) {
+    const room = await this.db.getRoom(attackData.gameId);
+    const attackedUser = room?.roomUsers.find(
+      ({ index }) => index !== attackData.indexPlayer
+    );
+    if (!attackedUser) {
+      throw new Error("No user found");
+    }
+    const { shipsInfo, userGameField } = attackedUser;
+    if (!shipsInfo || !userGameField) {
+      throw new Error("No ships found");
+    }
+
+    const shipsInfoCopy: ShipData[] = JSON.parse(JSON.stringify(shipsInfo));
+    let attackResult = "miss";
+    for (let i = 0; i < shipsInfoCopy.length; i++) {
+      const isHit = this.detectHitOnShip(
+        shipsInfoCopy[i],
+        userGameField,
+        attackData.x,
+        attackData.y
+      );
+      if (isHit) {
+        shipsInfoCopy[i].lives -= 1;
+        await this.db.addShipsToUser(
+          attackedUser.index,
+          attackData.gameId,
+          shipsInfo
+        );
+        if (shipsInfoCopy[i].lives === 0) {
+          attackResult = "killed";
+          this.db;
+        } else {
+          attackResult = "shot";
+        }
+        break;
+      }
+    }
+  }
+
+  detectHitOnShip(ship: ShipData, gameField: GameField, x: number, y: number) {
+    if (gameField[y][x].status !== "hidden") {
+      return gameField[y][x].status;
+    }
+    const { x: shipX, y: shipY } = ship.position;
+    const yData =
+      ship.direction === false
+        ? { start: shipY, end: shipY }
+        : { start: shipY, end: shipY + ship.length - 1 };
+    const xData =
+      ship.direction === false
+        ? { start: shipX, end: shipX + ship.length - 1 }
+        : { start: shipX, end: shipX };
+
+    const isHit =
+      x >= xData.start && x <= xData.end && y >= yData.start && y <= yData.end;
+
+    return isHit;
+  }
+
   isValidShipsIncomingData(
     shipsData: unknown
   ): shipsData is AddShipsIncomingData {
@@ -159,14 +229,10 @@ export class GameService {
       typeof shipsData.ships === "object" &&
       Array.isArray(shipsData.ships) &&
       shipsData.ships.every((item) => this.isValidShipData(item));
-    console.log("isValidData", res);
-
     return res;
   }
 
   isValidShipData(shipData: unknown): shipData is ShipData {
-    console.log("input", shipData);
-
     const res =
       !!shipData &&
       typeof shipData === "object" &&
@@ -186,7 +252,6 @@ export class GameService {
       "type" in shipData &&
       typeof shipData.type === "string" &&
       ["small", "medium", "large", "huge"].includes(shipData.type);
-    console.log("is every valid", res);
 
     return res;
   }

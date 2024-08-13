@@ -12,6 +12,7 @@ export type ShipData = {
   direction: boolean;
   type: "huge" | "large" | "medium" | "small";
   length: 1 | 2 | 3 | 4;
+  lives: number;
 };
 
 export type AddShipsIncomingData = {
@@ -50,4 +51,34 @@ export type TurnResponse = {
 
 export type TurnResponseData = {
   currentPlayer: string;
+};
+
+export type GameField = Array<Array<GameCell>>;
+
+export type GameCell = {
+  status: "shot" | "miss" | "killed" | "hidden";
+};
+
+export type IncomingAttackMessageType = {
+  type: "attack";
+  data: AttackData;
+  id: 0;
+};
+
+export type IncomingRandomAttackMessageType = {
+  type: "randomAttack";
+  data: AttackData;
+  id: 0;
+};
+
+export type RandomAttackData = {
+  gameId: string;
+  indexPlayer: string;
+};
+
+export type AttackData = {
+  x: number;
+  y: number;
+  gameId: string;
+  indexPlayer: string;
 };
